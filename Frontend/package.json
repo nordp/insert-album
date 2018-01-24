@@ -1,0 +1,19 @@
+{
+  "name": "insert-album",
+  "version": "1.0.0",
+  "description": "Web client for insert-album",
+  "main": "public/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nordp/insert-album.git"
+  },
+  "author": "Philip Nord",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nordp/insert-album/issues"
+  },
+  "homepage": "https://github.com/nordp/insert-album#readme"
+}

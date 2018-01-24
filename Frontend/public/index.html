@@ -1,51 +1,66 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+	<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Philip: insert-album</title>
 
-    <!--  Style grabbed and modified from firebase hosting template -->
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #box { background: white; max-width: 1080px; margin: 16px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #box h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #box h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #box p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #box a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; margin: 16px 350px; padding: 16px; border-radius: 4px; }
-      #box, #box a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #footer { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #box { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="box">
-      <h2>insert-album</h2>
-      <h1>Album viewer</h1>
-      <p>Here are some albums</p>
-      <a onclick="makeAlbum();">Make a dummy album</a>
-      <div id="albumList"></div>
-    </div>
+	<!--  Style grabbed and modified from firebase hosting template -->
+	<style media="screen">
+		body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+		#box { background: white; max-width: 1080px; margin: 16px auto 16px; padding: 32px 24px; border-radius: 3px; }
+		#box h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
+		#box h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+		#box p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
+		#box a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; margin: 16px 350px; padding: 16px; border-radius: 4px; }
+		#box, #box a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+		#footer { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
+		#small { color: rgba(0,0,0,0.4); font-size: 13px; }
+		@media (max-width: 600px) {
+		body, #box { margin-top: 0; background: white; box-shadow: none; }
+		body { border-top: 16px solid #ffa100; }
+		}
+	</style>
+	</head>
+	<body>
+	<div id="box">
+		<h2>insert-album</h2>
+		<h1>Album viewer</h1>
+		<p>Here are some albums</p>
+	</div>
 
-    <div id="footer">
-      <p>Made by <a href="//philipnord.se">Philip</a> for <a href="//insertcoin.se">Insert Coin</a></p>
-    </div>
-    
-  <script>
-      function makeAlbum(){
-        const albumList = document.getElementById("albumList");
-        const listEnd = document.getElementById("footer");
+	<div id="footer">
+		<p>Made by <a href="//philipnord.se">Philip</a> for <a href="//insertcoin.se">Insert Coin</a></p>
+	</div>
+	<script>
+		document.addEventListener("DOMContentLoaded", function(event) {
+			const http = new XMLHttpRequest();
+			http.open("GET", "https://insert-album.appspot.com/albums/");
+			http.send();
 
-        var newDiv = document.createElement("div");
-        newDiv.id = "box";
-        var content = document.createTextNode("Album 1");
-        newDiv.appendChild(content);
-        document.body.insertBefore(newDiv, listEnd);
-      };
+			http.onload = () => {
+				const albumList = JSON.parse(http.responseText);
+				albumList.forEach(element => {
+					makeAlbum(element.title,element.id,null);
+				});
+			}
+		});
 
-    </script>
-  </body>
+		function makeAlbum(title, id, gridList){
+			const listEnd = document.getElementById("footer");
+
+			var newDiv = document.createElement("div");
+			newDiv.id = "box";
+			var title = document.createTextNode(title);
+			newDiv.appendChild(title);
+			newDiv.appendChild(document.createElement("br"));
+			var albumId = document.createElement("p");
+			albumId.id = "small";
+			albumId.appendChild(document.createTextNode("id: " + id));
+			newDiv.appendChild(albumId);
+
+			document.body.insertBefore(newDiv, listEnd);
+		};
+	</script>
+	</body>
 </html>
