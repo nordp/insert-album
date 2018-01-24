@@ -1324,10 +1324,47 @@ const photos = [
     }
 ]
 
-app.get('/photos/', (req, res) => {
+const albums = [
+  {
+    "userId": 1,
+    "id": 1,
+    "title": "quidem molestiae enim"
+  },
+  {
+    "userId": 1,
+    "id": 2,
+    "title": "sunt qui excepturi placeat culpa"
+  },
+  {
+    "userId": 1,
+    "id": 3,
+    "title": "omnis laborum odio"
+  },
+  {
+    "userId": 1,
+    "id": 4,
+    "title": "non esse culpa molestiae omnis sed optio"
+  }
+]
 
+app.get('/photos/', (req, res) => {
     res.send(JSON.stringify(photos));
-  });
+});
+
+app.get('/albums/', (req, res) => {
+  res.send(JSON.stringify(albums));
+});
+
+//Vet att det är en dålig grej att låta id=index, men hårdkodad data är hårdkodad data..
+app.get('/albums/:albumId/', (req, res) => {
+  res.send(JSON.stringify(albums[req.params.albumId - 1]));
+});
+
+//Samma som ovan
+app.get('/photos/:photoId/', (req, res) => {
+  res.send(JSON.stringify(photos[req.params.photoId - 1]));
+});
+
 
 
 const server = app.listen(8080, () => {
