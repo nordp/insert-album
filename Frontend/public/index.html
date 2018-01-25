@@ -12,8 +12,8 @@
 		#box h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
 		#box h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
 		#box p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-		#box a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; margin: 16px 350px; padding: 16px; border-radius: 4px; }
-		#box, #box a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+		/*#box a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; margin: 16px 350px; padding: 16px; border-radius: 4px; }*/
+		#box, /*#box a*/ { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
 		#footer { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
 		#small { color: rgba(0,0,0,0.4); font-size: 13px; }
 		@media (max-width: 600px) {
@@ -25,8 +25,12 @@
 	<body>
 	<div id="box">
 		<h2>insert-album</h2>
-		<h1>Album viewer</h1>
+		<h1><a href="#/home">Album viewer</a></h1>
 		<p>Here are some albums</p>
+	</div>
+
+	<div id="flow">
+
 	</div>
 
 	<div id="footer">
@@ -34,6 +38,10 @@
 	</div>
 	<script>
 		document.addEventListener("DOMContentLoaded", function(event) {
+			locationHashChanged();
+		});
+
+		function queryAlbums(){
 			const http = new XMLHttpRequest();
 			http.open("GET", "https://insert-album.appspot.com/albums/");
 			http.send();
@@ -44,23 +52,86 @@
 					makeAlbum(element.title,element.id,null);
 				});
 			}
-		});
+		}
+
+		function queryAlbum(id){
+			const http = new XMLHttpRequest();
+			http.open("GET", "https://insert-album.appspot.com/albums/" + id);
+			http.send();
+			http.onload = () => {
+				const album = JSON.parse(http.responseText);
+				makeAlbum(album.title,album.id,null);
+			}
+		}
+
+		function queryPhotos(albumId, grid){
+			const http = new XMLHttpRequest();
+			http.open("GET", "https://insert-album.appspot.com/photos");
+			http.send();
+			http.onload = () => {
+				const photoList = JSON.parse(http.responseText);
+				photoList.forEach(photo => {
+					if(photo.albumId == albumId){
+						var thumb = document.createElement("img");
+						thumb.src = photo.thumbnailUrl;
+						grid.appendChild(thumb);
+					}
+				});
+			}
+		}
 
 		function makeAlbum(title, id, gridList){
-			const listEnd = document.getElementById("footer");
+			const flow = document.getElementById("flow");
 
 			var newDiv = document.createElement("div");
 			newDiv.id = "box";
 			var title = document.createTextNode(title);
-			newDiv.appendChild(title);
+			var albumLink = document.createElement("a");
+			albumLink.href = "#/album/" + id;
+			albumLink.appendChild(title);
+			newDiv.appendChild(albumLink);
 			newDiv.appendChild(document.createElement("br"));
 			var albumId = document.createElement("p");
 			albumId.id = "small";
 			albumId.appendChild(document.createTextNode("id: " + id));
 			newDiv.appendChild(albumId);
 
-			document.body.insertBefore(newDiv, listEnd);
+			var thumbnailGrid = document.createElement("div");
+			thumbnailGrid.id = "thumbnails";
+			queryPhotos(id, thumbnailGrid);
+			newDiv.appendChild(thumbnailGrid);
+			flow.appendChild(newDiv);
 		};
+
+		function showAlbum(id){
+			console.log("id " + id);
+			flushFlow();
+			queryAlbum(id);
+		}
+
+		function highightPhoto(id){
+			console.log("photoid " + id);
+		}
+
+		function flushFlow(){
+			const flow = document.getElementById("flow");
+			while(flow.firstChild){
+				flow.removeChild(flow.firstChild);
+			}
+		}
+
+		function locationHashChanged() {
+			if(/#\/album\/[0-9]+/.test(location.hash)){
+				showAlbum(location.hash.substring(8));
+			} else if(/#\/photo\/[0-9]+/.test(location.hash)){
+				highlightPhoto(location.hash.substring(8));
+			} else {
+				flushFlow();
+				queryAlbums();
+			}
+		}
+
+		window.onhashchange = locationHashChanged;
 	</script>
 	</body>
 </html>
