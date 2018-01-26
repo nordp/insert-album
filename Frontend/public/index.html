@@ -11,6 +11,7 @@
 		#box { background: white; max-width: 1080px; margin: 16px auto 16px; padding: 32px 24px; border-radius: 3px; }
 		#box h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
 		#box h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+		#box a { color: black; }
 		#box p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
 		/*#box a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; margin: 16px 350px; padding: 16px; border-radius: 4px; }*/
 		#box, /*#box a*/ { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
@@ -49,7 +50,7 @@
 			http.onload = () => {
 				const albumList = JSON.parse(http.responseText);
 				albumList.forEach(element => {
-					makeAlbum(element.title,element.id,null);
+					makeAlbum(element.title,element.id, 7);
 				});
 			}
 		}
@@ -60,18 +61,18 @@
 			http.send();
 			http.onload = () => {
 				const album = JSON.parse(http.responseText);
-				makeAlbum(album.title,album.id,null);
+				makeAlbum(album.title,album.id, -1);
 			}
 		}
 
-		function queryPhotos(albumId, grid){
+		function queryThumbnails(albumId, grid, n){
 			const http = new XMLHttpRequest();
-			http.open("GET", "https://insert-album.appspot.com/photos");
+			http.open("GET", "https://insert-album.appspot.com/albums/" + albumId + "/photos/");
 			http.send();
 			http.onload = () => {
-				const photoList = JSON.parse(http.responseText);
-				photoList.forEach(photo => {
-					if(photo.albumId == albumId){
+				var photoList = JSON.parse(http.responseText);
+				photoList.forEach(function(photo, i){
+					if(i < n || n == -1){
 						var thumb = document.createElement("img");
 						thumb.src = photo.thumbnailUrl;
 						grid.appendChild(thumb);
@@ -80,7 +81,7 @@
 			}
 		}
 
-		function makeAlbum(title, id, gridList){
+		function makeAlbum(title, id, size){
 			const flow = document.getElementById("flow");
 
 			var newDiv = document.createElement("div");
@@ -88,6 +89,7 @@
 			var title = document.createTextNode(title);
 			var albumLink = document.createElement("a");
 			albumLink.href = "#/album/" + id;
+			albumLink = document.createElement("h1").appendChild(albumLink);
 			albumLink.appendChild(title);
 			newDiv.appendChild(albumLink);
 			newDiv.appendChild(document.createElement("br"));
@@ -97,8 +99,8 @@
 			newDiv.appendChild(albumId);
 
 			var thumbnailGrid = document.createElement("div");
-			thumbnailGrid.id = "thumbnails";
-			queryPhotos(id, thumbnailGrid);
+			thumbnailGrid.id = "thumbnails-" + id;
+			queryThumbnails(id, thumbnailGrid, size);
 			newDiv.appendChild(thumbnailGrid);
 			flow.appendChild(newDiv);
 		};

@@ -1364,6 +1364,16 @@ app.get('/albums/:albumId/', (req, res) => {
   res.send(JSON.stringify(albums[req.params.albumId - 1]));
 });
 
+app.get('/albums/:albumId/photos', (req, res) => {
+  var album = [];
+  photos.forEach(photo =>{
+    if(photo.albumId == req.params.albumId){
+      album.push(photo);
+    }
+  });
+  res.send(JSON.stringify(album));
+});
+
 //Samma som ovan
 app.get('/photos/:photoId/', (req, res) => {
   res.send(JSON.stringify(photos[req.params.photoId - 1]));
