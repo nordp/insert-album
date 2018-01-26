@@ -17,6 +17,8 @@
 		#box, /*#box a*/ { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
 		#footer { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
 		#small { color: rgba(0,0,0,0.4); font-size: 13px; }
+		#lightbox { position: fixed; display: none; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 2;/* cursor: pointer; */} 
+		#frame {display: block; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
 		@media (max-width: 600px) {
 		body, #box { margin-top: 0; background: white; box-shadow: none; }
 		body { border-top: 16px solid #ffa100; }
@@ -24,6 +26,11 @@
 	</style>
 	</head>
 	<body>
+	<div id="lightbox" onclick="hideLightbox()">
+		<div id="frame">
+			<img id="image" class="center" src="#"/>
+		</div>
+	</div>
 	<div id="box">
 		<h2>insert-album</h2>
 		<h1><a href="#/home">Album viewer</a></h1>
@@ -38,6 +45,9 @@
 		<p>Made by <a href="//philipnord.se">Philip</a> for <a href="//insertcoin.se">Insert Coin</a></p>
 	</div>
 	<script>
+
+		var photoList = [];
+
 		document.addEventListener("DOMContentLoaded", function(event) {
 			locationHashChanged();
 		});
@@ -70,12 +80,19 @@
 			http.open("GET", "https://insert-album.appspot.com/albums/" + albumId + "/photos/");
 			http.send();
 			http.onload = () => {
-				var photoList = JSON.parse(http.responseText);
+				photoList = JSON.parse(http.responseText);
 				photoList.forEach(function(photo, i){
 					if(i < n || n == -1){
+						var link = document.createElement("a");
+						if(n == -1){
+							link.href = "#/album/" + albumId + "/photo/" + i
+						} else {
+							link.href = "#/album/" + albumId;
+						}
 						var thumb = document.createElement("img");
 						thumb.src = photo.thumbnailUrl;
-						grid.appendChild(thumb);
+						link.appendChild(thumb);
+						grid.appendChild(link);
 					}
 				});
 			}
@@ -105,14 +122,23 @@
 			flow.appendChild(newDiv);
 		};
 
-		function showAlbum(id){
-			console.log("id " + id);
-			flushFlow();
-			queryAlbum(id);
+		function startLightbox(photoId){
+			document.getElementById("lightbox").style.display = "block";
+			highlightPhoto(photoId);
 		}
 
-		function highightPhoto(id){
-			console.log("photoid " + id);
+		function hideLightbox(){
+			document.getElementById("lightbox").style.display = "none";
+			document.getElementById("image").src = "#";
+		}
+
+		function highlightPhoto(index){
+			console.log("photoindex " + index);
+			var image = document.getElementById("image")
+			var photo = photoList[index];
+			//while(photo == null){ photo = photoList[index]; }
+			image.src = photo
+			
 		}
 
 		function flushFlow(){
@@ -120,13 +146,22 @@
 			while(flow.firstChild){
 				flow.removeChild(flow.firstChild);
 			}
+			document.getElementById("lightbox").style.display = "none";
 		}
 
 		function locationHashChanged() {
-			if(/#\/album\/[0-9]+/.test(location.hash)){
-				showAlbum(location.hash.substring(8));
-			} else if(/#\/photo\/[0-9]+/.test(location.hash)){
-				highlightPhoto(location.hash.substring(8));
+			if(/#\/album\/[0-9]+\/photo\/[0-9]+/.test(location.hash)){
+				var albumId = location.hash.substring(8,9);
+				var photoId = location.hash.substring(16);
+				if(document.getElementById("flow").children.length == 0){
+					queryAlbum(albumId)
+					startLightbox(photoId);
+				} else {
+					startLightbox(photoId);
+				}
+			} else if(/#\/album\/[0-9]+/.test(location.hash)){
+				flushFlow();
+				queryAlbum(location.hash.substring(8), {});
 			} else {
 				flushFlow();
 				queryAlbums();
