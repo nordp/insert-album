@@ -8,17 +8,19 @@
 	<!--  Style grabbed and modified from firebase hosting template -->
 	<style media="screen">
 		body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-		#box { background: white; max-width: 1080px; margin: 16px auto 16px; padding: 32px 24px; border-radius: 3px; }
-		#box h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-		#box h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-		#box a { color: black; }
-		#box p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
+		.box { background: white; max-width: 1080px; margin: 16px auto 16px; padding: 32px 24px; border-radius: 3px; }
+		.box h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
+		.box h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+		.box a { color: black; }
+		.box p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
 		/*#box a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; margin: 16px 350px; padding: 16px; border-radius: 4px; }*/
-		#box, /*#box a*/ { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+		.box, /*#box a*/ { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
 		#footer { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
 		#small { color: rgba(0,0,0,0.4); font-size: 13px; }
 		#lightbox { position: fixed; display: none; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 2;/* cursor: pointer; */} 
-		#frame {display: block; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+		#frame { position: relative; top: 50%; transform: translateY(-50%); text-align: center; }
+		.fab { position: relative; transform: translateY(-500%); display:inline-block;  width: 55px; height: 55px; border-radius: 50%; background: #db4437; cursor: pointer; box-shadow: 0px 2px 5px #666; }
+		.icon{ color: white; top: 0; bottom: 0; left: 0; right: 0; text-align: center; padding: 0; margin: 0; line-height: 55px; font-size: 38px; font-weight: 300; transition: all 0.3s; }
 		@media (max-width: 600px) {
 		body, #box { margin-top: 0; background: white; box-shadow: none; }
 		body { border-top: 16px solid #ffa100; }
@@ -26,12 +28,14 @@
 	</style>
 	</head>
 	<body>
-	<div id="lightbox" onclick="hideLightbox()">
+	<div id="lightbox" onclick="">
 		<div id="frame">
-			<img id="image" class="center" src="#"/>
+			<div id="prev" class="fab" onclick="browse(-1)"><p class="icon">&lt;</p></div>
+			<img id="image" src="#"/>
+			<div id="next" class="fab" onclick="browse(1)"><p class="icon">&gt;</p></div>
 		</div>
 	</div>
-	<div id="box">
+	<div class="box">
 		<h2>insert-album</h2>
 		<h1><a href="#/home">Album viewer</a></h1>
 		<p>Here are some albums</p>
@@ -47,6 +51,7 @@
 	<script>
 
 		var photoList = [];
+		var currentAlbum;
 
 		document.addEventListener("DOMContentLoaded", function(event) {
 			locationHashChanged();
@@ -75,6 +80,16 @@
 			}
 		}
 
+		function queryPhoto(albumId, photoId){
+			const http = new XMLHttpRequest();
+			http.open("GET", "https://insert-album.appspot.com/albums/" + albumId + "/photo/" + photoId);
+			http.send();
+			http.onload = () => {
+				const photo = JSON.parse(http.responseText);
+				startLightbox(photo.url, photoId);
+			}
+		}
+
 		function queryThumbnails(albumId, grid, n){
 			const http = new XMLHttpRequest();
 			http.open("GET", "https://insert-album.appspot.com/albums/" + albumId + "/photos/");
@@ -99,10 +114,12 @@
 		}
 
 		function makeAlbum(title, id, size){
+			currentAlbum = id;
 			const flow = document.getElementById("flow");
 
 			var newDiv = document.createElement("div");
-			newDiv.id = "box";
+			newDiv.id = id;
+			newDiv.className = "box";
 			var title = document.createTextNode(title);
 			var albumLink = document.createElement("a");
 			albumLink.href = "#/album/" + id;
@@ -122,23 +139,43 @@
 			flow.appendChild(newDiv);
 		};
 
-		function startLightbox(photoId){
+		function startLightbox(url, index){
 			document.getElementById("lightbox").style.display = "block";
-			highlightPhoto(photoId);
+			var image = document.getElementById("image");
+			if(url){
+				image.src = url;
+			} else {image.src = photoList[index].url};
+			image.accessKey = index;
+			if(index == 0){
+				document.getElementById("prev").style.display = "none";
+			} else if (index == photoList.length - 1){
+				document.getElementById("next").style.display = "none";
+			} else {
+				document.getElementById("prev").style.display = "inline-block";
+				document.getElementById("next").style.display = "inline-block";
+			}
 		}
 
 		function hideLightbox(){
 			document.getElementById("lightbox").style.display = "none";
 			document.getElementById("image").src = "#";
+			window.location.hash = "#/album/" + currentAlbum;
 		}
 
-		function highlightPhoto(index){
-			console.log("photoindex " + index);
-			var image = document.getElementById("image")
-			var photo = photoList[index];
-			//while(photo == null){ photo = photoList[index]; }
-			image.src = photo
-			
+		function browse(dir){
+			var photoId = Number(document.getElementById("image").accessKey);
+			//Hide button at ends of photoList
+			if(photoId == 1 && dir == -1){
+				document.getElementById("prev").style.display = "none";
+			} else if(photoId == 0 && dir == 1){
+				document.getElementById("prev").style.display = "inline-block";
+			} else if (photoId == photoList.length - 2 && dir == 1){
+				document.getElementById("next").style.display = "none";
+			} else if (photoId == photoList.length -1 && dir == -1){
+				document.getElementById("next").style.display = "inline-block";
+			}
+			photoId += dir;
+			window.location.hash = '#/album/' + currentAlbum + "/photo/" + photoId;
 		}
 
 		function flushFlow(){
@@ -154,14 +191,16 @@
 				var albumId = location.hash.substring(8,9);
 				var photoId = location.hash.substring(16);
 				if(document.getElementById("flow").children.length == 0){
-					queryAlbum(albumId)
-					startLightbox(photoId);
+					queryAlbum(albumId);
+					queryPhoto(albumId, photoId);
 				} else {
-					startLightbox(photoId);
+					startLightbox(null, photoId);
 				}
 			} else if(/#\/album\/[0-9]+/.test(location.hash)){
+				var id = location.hash.substring(8);
+				if(currentAlbum == id){return;}
 				flushFlow();
-				queryAlbum(location.hash.substring(8), {});
+				queryAlbum(id, {});
 			} else {
 				flushFlow();
 				queryAlbums();
