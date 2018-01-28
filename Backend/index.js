@@ -1374,14 +1374,14 @@ app.get('/albums/:albumId/photos', (req, res) => {
   res.send(JSON.stringify(album));
 });
 
-app.get('/albums/:albumId/photo/:photoId', (req, res) => {
+app.get('/albums/:albumId/photo/:index', (req, res) => {
   var album = [];
   photos.forEach(photo =>{
     if(photo.albumId == req.params.albumId){
       album.push(photo);
     }
   });
-  res.send(JSON.stringify(album[req.params.photoId]));
+  res.send(JSON.stringify(album[req.params.index]));
 });
 
 //Samma som ovan
