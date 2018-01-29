@@ -18,8 +18,8 @@
 		#footer { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
 		#small { color: rgba(0,0,0,0.4); font-size: 13px; }
 		#lightbox { position: fixed; display: none; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 2;/* cursor: pointer; */} 
-		#navL {display: none; position: fixed; top: 50%; transform: translateY(-50%);}
-		#navR {display: none; position: fixed; top: 50%; transform: translateY(-50%);}
+		#prevAlbum {display: none; position: fixed; top: 50%; transform: translateY(-50%);}
+		#nextAlbum {display: none; position: fixed; top: 50%; transform: translateY(-50%);}
 		#frame { position: relative; top: 50%; transform: translateY(-50%); text-align: center; }
 		.fab { display:inline-block;  width: 55px; height: 55px; border-radius: 50%; margin: 14px; ;background: #db4437; cursor: pointer; box-shadow: 0px 2px 5px #666; }
 		#frame .fab {position: relative; transform: translateY(-500%);}
@@ -34,14 +34,14 @@
 	<body>
 	<div id="lightbox">
 		<div id="frame">
-			<div id="prev" class="fab" onclick="browse(-1)"><p class="icon">&lt;</p></div>
+			<div id="prevPhoto" class="fab" onclick="s(-1)"><p class="icon">&lt;</p></div>
 			<img id="image" src="#"/>
-			<div id="next" class="fab" onclick="browse(1)"><p class="icon">&gt;</p></div>
+			<div id="nextPhoto" class="fab" onclick="s(1)"><p class="icon">&gt;</p></div>
 		</div>
 		<div id="close" class="fab" onclick="hideLightbox()"><p class="icon">X</p></div>
 	</div>
-	<div id="navL" class="fab" style="left:0" onclick="changeAlbum(-1)"><p class="icon">&lt;</p></div>
-	<div id="navR" class="fab" style="right:0" onclick="changeAlbum(1)"><p class="icon">&gt;</p></div>
+	<div id="prevAlbum" class="fab" style="left:0" onclick="browseAlbums(-1)"><p class="icon">&lt;</p></div>
+	<div id="nextAlbum" class="fab" style="right:0" onclick="browseAlbums(1)"><p class="icon">&gt;</p></div>
 	<div class="box">
 		<h2>insert-album</h2>
 		<h1><a href="#/home">Album viewer</a></h1>
@@ -65,6 +65,7 @@
 			locationHashChanged();
 		});
 
+		//Queries all available albums and if populate == true, makes a preview element for it with 7 thumbnails.
 		function queryAlbums(populate){
 			const http = new XMLHttpRequest();
 			http.open("GET", "https://insert-album.appspot.com/albums/");
@@ -75,34 +76,38 @@
 				maxAlbums = albumList.length;
 				if(populate){
 					albumList.forEach(element => {
-						makeAlbum(element.title,element.id, 7);
+						makeAlbumBoxElement(element.title,element.id, 7);
 					});
-					showNav(0);
+					updateAlbumNavigation(0);
 				}
 			}
 		}
 
+		//queries an album and makes div element for it with makeAlbumBoxElement()
 		function queryAlbum(id){
 			const http = new XMLHttpRequest();
 			http.open("GET", "https://insert-album.appspot.com/albums/" + id);
 			http.send();
 			http.onload = () => {
 				const album = JSON.parse(http.responseText);
-				makeAlbum(album.title,album.id, -1);
+				makeAlbumBoxElement(album.title,album.id, -1);
 			}
 		}
 
+		//queries a single photo and highlights it, used in async workaround
 		function queryPhoto(albumId, photoId){
 			const http = new XMLHttpRequest();
 			http.open("GET", "https://insert-album.appspot.com/albums/" + albumId + "/photo/" + photoId);
 			http.send();
 			http.onload = () => {
 				const photo = JSON.parse(http.responseText);
-				startLightbox(photo.url, photoId);
+				highlightPhoto(photo.url, photoId);
 			}
 		}
 
-		function queryThumbnails(albumId, grid, n){
+		//Queries the photos of the albumId and places n in grid.
+		//If n == -1, it populates the grid with the thumbnails of the entire album
+		function insertThumbnails(albumId, grid, n){
 			const http = new XMLHttpRequest();
 			http.open("GET", "https://insert-album.appspot.com/albums/" + albumId + "/photos/");
 			http.send();
@@ -125,7 +130,8 @@
 			}
 		}
 
-		function makeAlbum(title, id, size){
+		//Creates the box div of the album and places it in the flow div.
+		function makeAlbumBoxElement(title, id, size){
 			currentAlbum = id;
 			const flow = document.getElementById("flow");
 
@@ -146,73 +152,81 @@
 
 			var thumbnailGrid = document.createElement("div");
 			thumbnailGrid.id = "thumbnails-" + id;
-			queryThumbnails(id, thumbnailGrid, size);
+			insertThumbnails(id, thumbnailGrid, size);
 			newDiv.appendChild(thumbnailGrid);
 			flow.appendChild(newDiv);
 			
-			showNav(id);
+			updateAlbumNavigation(id);
 		};
 
-		function showNav(id){
+		function updateAlbumNavigation(id){
 			if(id == 0){
-				document.getElementById("navL").style.display = "none";
-				document.getElementById("navR").style.display = "none";
+				document.getElementById("prevAlbum").style.display = "none";
+				document.getElementById("nextAlbum").style.display = "none";
 				return;
 			}
 			if (id > 1){
-				document.getElementById("navL").style.display = "inline-block";
+				document.getElementById("prevAlbum").style.display = "inline-block";
 			} else {
-				document.getElementById("navL").style.display = "none";
+				document.getElementById("prevAlbum").style.display = "none";
 			}
 			if (id < maxAlbums){
-				document.getElementById("navR").style.display = "inline-block";
+				document.getElementById("nextAlbum").style.display = "inline-block";
 			} else {
-				document.getElementById("navR").style.display = "none";
+				document.getElementById("nextAlbum").style.display = "none";
 			}
 		}
 
-		function changeAlbum(dir){
+		function browseAlbums(dir){
 			window.location.hash = '#/album/' + Number(currentAlbum + dir);
 		}
-		function startLightbox(url, index){
+
+		//Highlights a photo with url or index.
+		function highlightPhoto(url, index){
 			document.getElementById("lightbox").style.display = "block";
 			var image = document.getElementById("image");
+
+			//Temporary async workaround 
 			if(url){
 				image.src = url;
 			} else {image.src = photoList[index].url};
 			image.accessKey = index;
 			if(index == 0){
-				document.getElementById("prev").style.display = "none";
+				document.getElementById("prevPhoto").style.display = "none";
 			} else if (index == photoList.length - 1){
-				document.getElementById("next").style.display = "none";
+				document.getElementById("nextPhoto").style.display = "none";
 			} else {
-				document.getElementById("prev").style.display = "inline-block";
-				document.getElementById("next").style.display = "inline-block";
+				document.getElementById("prevPhoto").style.display = "inline-block";
+				document.getElementById("nextPhoto").style.display = "inline-block";
 			}
 		}
 
+		//Hides the lightbox and navigates back to currentAlbum
 		function hideLightbox(){
 			document.getElementById("lightbox").style.display = "none";
 			document.getElementById("image").src = "#";
 			window.location.hash = "#/album/" + currentAlbum;
 		}
 
-		function browse(dir){
+		//Used to browse left and right (-1, 1) when lightbox is up
+		function browsePhotos(dir){
 			var photoId = Number(document.getElementById("image").accessKey);
-			//Hide button at ends of photoList
+			
+			//Hide button at beginning and end of album
 			if(photoId == 1 && dir == -1){
-				document.getElementById("prev").style.display = "none";
+				document.getElementById("prevPhoto").style.display = "none";
 			} else if(photoId == 0 && dir == 1){
-				document.getElementById("prev").style.display = "inline-block";
+				document.getElementById("prevPhoto").style.display = "inline-block";
 			} else if (photoId == photoList.length - 2 && dir == 1){
-				document.getElementById("next").style.display = "none";
+				document.getElementById("nextPhoto").style.display = "none";
 			} else if (photoId == photoList.length -1 && dir == -1){
-				document.getElementById("next").style.display = "inline-block";
+				document.getElementById("nextPhoto").style.display = "inline-block";
 			}
 			photoId += dir;
 			window.location.hash = '#/album/' + currentAlbum + "/photo/" + photoId;
 		}
 
+		//Remove all "box" elements in flow div and hides lightbox
 		function flushFlow(){
 			const flow = document.getElementById("flow");
 			while(flow.firstChild){
@@ -221,6 +235,7 @@
 			document.getElementById("lightbox").style.display = "none";
 		}
 
+		//Handles all navigation
 		function locationHashChanged() {
 			if(/#\/album\/[0-9]+\/photo\/[0-9]+/.test(location.hash)){
 				var albumId = location.hash.substring(8,9);
@@ -229,7 +244,7 @@
 					queryAlbum(albumId);
 					queryPhoto(albumId, photoId);
 				} else {
-					startLightbox(null, photoId);
+					highlightPhoto(null, photoId);
 				}
 			} else if(/#\/album\/[0-9]+/.test(location.hash)){
 				var id = location.hash.substring(8);
