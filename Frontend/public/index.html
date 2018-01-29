@@ -18,8 +18,11 @@
 		#footer { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
 		#small { color: rgba(0,0,0,0.4); font-size: 13px; }
 		#lightbox { position: fixed; display: none; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 2;/* cursor: pointer; */} 
+		#navL {display: none; position: fixed; top: 50%; transform: translateY(-50%);}
+		#navR {display: none; position: fixed; top: 50%; transform: translateY(-50%);}
 		#frame { position: relative; top: 50%; transform: translateY(-50%); text-align: center; }
-		.fab { position: relative; transform: translateY(-500%); display:inline-block;  width: 55px; height: 55px; border-radius: 50%; background: #db4437; cursor: pointer; box-shadow: 0px 2px 5px #666; }
+		.fab { display:inline-block;  width: 55px; height: 55px; border-radius: 50%; margin: 14px; ;background: #db4437; cursor: pointer; box-shadow: 0px 2px 5px #666; }
+		#frame .fab {position: relative; transform: translateY(-500%);}
 		.icon{ color: white; top: 0; bottom: 0; left: 0; right: 0; text-align: center; padding: 0; margin: 0; line-height: 55px; font-size: 38px; font-weight: 300; transition: all 0.3s; }
 		#close { position: absolute; top:25px; left: 30px; cursor: pointer;}
 		@media (max-width: 600px) {
@@ -30,13 +33,15 @@
 	</head>
 	<body>
 	<div id="lightbox">
-		<div id="close" class"fab" onclick="hideLightbox()"><p class="icon">X</p></div>
 		<div id="frame">
 			<div id="prev" class="fab" onclick="browse(-1)"><p class="icon">&lt;</p></div>
 			<img id="image" src="#"/>
 			<div id="next" class="fab" onclick="browse(1)"><p class="icon">&gt;</p></div>
 		</div>
+		<div id="close" class="fab" onclick="hideLightbox()"><p class="icon">X</p></div>
 	</div>
+	<div id="navL" class="fab" style="left:0" onclick="changeAlbum(-1)"><p class="icon">&lt;</p></div>
+	<div id="navR" class="fab" style="right:0" onclick="changeAlbum(1)"><p class="icon">&gt;</p></div>
 	<div class="box">
 		<h2>insert-album</h2>
 		<h1><a href="#/home">Album viewer</a></h1>
@@ -54,21 +59,26 @@
 
 		var photoList = [];
 		var currentAlbum;
+		var maxAlbums;
 
 		document.addEventListener("DOMContentLoaded", function(event) {
 			locationHashChanged();
 		});
 
-		function queryAlbums(){
+		function queryAlbums(populate){
 			const http = new XMLHttpRequest();
 			http.open("GET", "https://insert-album.appspot.com/albums/");
 			http.send();
 
 			http.onload = () => {
 				const albumList = JSON.parse(http.responseText);
-				albumList.forEach(element => {
-					makeAlbum(element.title,element.id, 7);
-				});
+				maxAlbums = albumList.length;
+				if(populate){
+					albumList.forEach(element => {
+						makeAlbum(element.title,element.id, 7);
+					});
+					showNav(0);
+				}
 			}
 		}
 
@@ -139,8 +149,31 @@
 			queryThumbnails(id, thumbnailGrid, size);
 			newDiv.appendChild(thumbnailGrid);
 			flow.appendChild(newDiv);
+			
+			showNav(id);
 		};
 
+		function showNav(id){
+			if(id == 0){
+				document.getElementById("navL").style.display = "none";
+				document.getElementById("navR").style.display = "none";
+				return;
+			}
+			if (id > 1){
+				document.getElementById("navL").style.display = "inline-block";
+			} else {
+				document.getElementById("navL").style.display = "none";
+			}
+			if (id < maxAlbums){
+				document.getElementById("navR").style.display = "inline-block";
+			} else {
+				document.getElementById("navR").style.display = "none";
+			}
+		}
+
+		function changeAlbum(dir){
+			window.location.hash = '#/album/' + Number(currentAlbum + dir);
+		}
 		function startLightbox(url, index){
 			document.getElementById("lightbox").style.display = "block";
 			var image = document.getElementById("image");
@@ -202,10 +235,11 @@
 				var id = location.hash.substring(8);
 				if(currentAlbum == id){return;}
 				flushFlow();
-				queryAlbum(id, {});
+				queryAlbums();
+				queryAlbum(id);
 			} else {
 				flushFlow();
-				queryAlbums();
+				queryAlbums(true);
 			}
 		}
 
